@@ -87,6 +87,7 @@ public class ScanTest extends SimpleDbTestBase {
         }
 
         // Create the table
+        //因为只有一列，992*4+992/8=4096，等于一个页的大小
         final int PAGES = 30;
         ArrayList<ArrayList<Integer>> tuples = new ArrayList<ArrayList<Integer>>();
         File f = SystemTestUtil.createRandomHeapFileUnopened(1, 992*PAGES, 1000, null, tuples);

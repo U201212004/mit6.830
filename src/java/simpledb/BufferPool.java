@@ -26,6 +26,8 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
 
+    private final int numPages;
+    private final ConcurrentHashMap<PageId,Page> bufferPool;
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -33,6 +35,8 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         // some code goes here
+        this.numPages = numPages;
+        this.bufferPool = new ConcurrentHashMap<>(numPages);
     }
     
     public static int getPageSize() {
@@ -59,7 +63,8 @@ public class BufferPool {
      * be added to the buffer pool and returned.  If there is insufficient
      * space in the buffer pool, a page should be evicted and the new page
      * should be added in its place.
-     *
+     *如果要找的页面在缓存中，直接从bufferpool读出
+     * 如果不在，就要通过Catalog找到表，再找到页面
      * @param tid the ID of the transaction requesting the page
      * @param pid the ID of the requested page
      * @param perm the requested permissions on the page
@@ -67,7 +72,18 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        if(bufferPool.containsKey(pid))
+            return bufferPool.get(pid);
+
+        if(bufferPool.size() < numPages){
+            Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+            bufferPool.put(pid, page);
+            return page;
+        }else{
+            //还没实现页面置换算法
+            throw new DbException("BufferPool: BufferPool is full");
+        }
+
     }
 
     /**
